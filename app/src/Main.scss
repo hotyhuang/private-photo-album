@@ -1,0 +1,28 @@
+.app-container {
+    display: grid;
+    grid-template-columns: min-content auto;
+    grid-template-rows: 6.5rem calc(100% - 6.5rem);
+    grid-template-areas: 
+        "menu header"
+        "menu main";
+    height: 100vh;
+}
+
+.app-menu {
+    grid-area: menu;
+    overflow-y: auto;
+}
+
+.app-header {
+    grid-area: header;
+    width: 100%;
+    padding: 2rem;
+    display: flex;
+    justify-content: flex-end;
+    background-image: linear-gradient(180deg, #ffc107 0%, #fff 100%);
+}
+
+.app-main {
+    grid-area: main;
+    overflow-y: auto;
+}

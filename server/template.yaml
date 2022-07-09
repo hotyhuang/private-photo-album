@@ -1,0 +1,246 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  aws-lambda-s3
+
+  Template to provision your s3 bucket and lambda functions
+
+Parameters:
+  PublicKey:
+    Type: String
+  PrivateKey:
+    Type: String
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+    MemorySize: 128
+    Runtime: nodejs16.x
+    Environment:
+      Variables:
+        UploadBucket: !Ref S3UploadBucket
+        UploadCDN: !GetAtt PhotosCDN.DomainName
+
+Resources:
+  # HTTP API
+  MyApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      # CORS configuration - this is open for development only and should be restricted in prod.
+      # See https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-httpapi-httpapicorsconfiguration.html   
+      CorsConfiguration:
+        AllowMethods:
+          - GET
+          - OPTIONS
+        AllowHeaders:
+          - "*"
+        AllowOrigins: 
+          - "*"
+  
+  ## Lambda functions
+  UploadFunction:
+    # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function 
+    Properties:
+      Handler: upload.handler
+      Policies:
+        - S3WritePolicy:
+            BucketName: !Ref S3UploadBucket
+      Events:
+        UploadAssetAPI:
+          Type: HttpApi
+          Properties:
+            Path: /upload
+            Method: get
+            ApiId: !Ref MyApi
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: true
+        External: 
+          - 'aws-lambda'
+        EntryPoints: 
+        - src/upload.ts
+  
+  ListFoldersFunction:
+    # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function 
+    Properties:
+      Handler: listFolders.handler
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref S3UploadBucket
+      Events:
+        UploadAssetAPI:
+          Type: HttpApi
+          Properties:
+            Path: /list/folders
+            Method: get
+            ApiId: !Ref MyApi
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: true
+        External: 
+          - 'aws-lambda'
+        EntryPoints: 
+        - src/listFolders.ts
+  
+  ListPhotosFunction:
+    # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function 
+    Properties:
+      Environment:
+        Variables:
+          KEY_PAIR_ID: !Ref CDNPublicKey
+          PRIVATE_KEY: !Ref PrivateKey
+      Handler: listPhotos.handler
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref S3UploadBucket
+      Events:
+        UploadAssetAPI:
+          Type: HttpApi
+          Properties:
+            Path: /list/{folder}/photos
+            Method: get
+            ApiId: !Ref MyApi
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: true
+        External: 
+          - 'aws-lambda'
+        EntryPoints: 
+        - src/listPhotos.ts
+
+  ## S3 bucket
+  S3UploadBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccelerateConfiguration:
+        AccelerationStatus: Enabled
+      AccessControl: Private
+      CorsConfiguration:
+        CorsRules:
+        - AllowedHeaders:
+            - "*"
+          AllowedMethods:
+            - GET
+            - PUT
+            - HEAD
+          AllowedOrigins:
+            - "*"
+
+  CloudFrontOriginIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: photos-storage-access-identity
+
+# Currently cloudformation s3 does not support Origin Control, see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudfront-distribution-s3originconfig.html
+  # CloudFrontOriginControl:
+  #   Type: AWS::CloudFront::OriginAccessControl
+  #   Properties: 
+  #     OriginAccessControlConfig: 
+  #       Name: photos-storage-access-control
+  #       OriginAccessControlOriginType: s3
+  #       SigningBehavior: always
+  #       SigningProtocol: sigv4
+  
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3UploadBucket
+      PolicyDocument:
+        Version: '2008-10-17'
+        Id: 'PolicyForCloudFrontPrivateContent'
+        Statement:
+          - Sid: 'AllowCloudFrontServicePrincipal'
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginIdentity}'
+            Action: 's3:GetObject'
+            Resource: !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref S3UploadBucket
+                - /*
+          # - Effect: Allow
+          #   Principal:
+          #     AWS: !GetAtt UploadFunction.Role
+          #   Action: 's3:PutObject'
+          #   Resource: !Join
+          #     - ''
+          #     - - 'arn:aws:s3:::'
+          #       - !Ref S3UploadBucket
+          #       - /*
+
+  CDNPublicKey:
+    Type: AWS::CloudFront::PublicKey
+    Properties: 
+      PublicKeyConfig: 
+        CallerReference: cdn-public-key
+        EncodedKey: !Ref PublicKey
+        Name: my-photos-cdn-public-key
+
+  CDNKeyGroup:
+    Type: AWS::CloudFront::KeyGroup
+    Properties: 
+      KeyGroupConfig: 
+        Items: 
+          - !Ref CDNPublicKey
+        Name: my-photos-cdn-key-group
+
+  PhotosCDN:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !Join
+              - ''
+              - - !Ref S3UploadBucket
+                - '.s3.'
+                - !Ref AWS::Region
+                - '.amazonaws.com'
+            Id: !Ref S3UploadBucket
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginIdentity}'
+        Enabled: 'true'
+        HttpVersion: http2
+        DefaultCacheBehavior:
+          TargetOriginId: !Ref S3UploadBucket
+          Compress: true
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+          # you have to create your own key-group first
+          TrustedKeyGroups:
+            - !Ref CDNKeyGroup
+          # https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+
+Outputs:
+  APIendpoint:
+    Description: "HTTP API endpoint URL"
+    Value: !Sub "https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com"
+    Export:
+      Name:
+        'Fn::Sub': '${AWS::StackName}-APIendpoint'
+  S3UploadBucketName:
+    Description: "S3 bucket for application uploads"
+    Value: !Ref 'S3UploadBucket'
+  PublicKeyID:
+    Description: "Public key id"
+    Value: !Ref CDNPublicKey
+  DistributionID:
+    Description: "Cloudfront for the storage"
+    Value: !GetAtt PhotosCDN.DomainName

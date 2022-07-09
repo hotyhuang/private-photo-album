@@ -1,0 +1,45 @@
+.loadingSpinner {
+    position: relative;
+    height: 6rem !important;
+    width: 6rem !important;
+    top: calc(50% - 3rem);
+    left: calc(50% - 3rem);
+}
+
+.photoList-container {
+    text-align: center;
+    padding: 0 1.5rem;
+    
+    .photoList {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+    }
+    
+    .photoItem {
+        width: 100%;
+        cursor: pointer;
+        transition: all .5s ease;
+        
+        &:hover {
+            transform: scale(1.1);
+        }
+    }
+}
+
+.highlight-photo-modal {
+    max-width: none !important;
+    width: 100% !important;
+
+    $carousel-width: 5%;
+
+    .highlight-photo-body {
+        padding: 0 !important;
+        display: flex;
+        justify-content: center;
+    }
+
+    .highlight-photo-item {
+        width: 100%;
+    }
+}
