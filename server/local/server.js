@@ -9,6 +9,9 @@ const { S3Client, ListObjectsV2Command, PutObjectCommand } = require('@aws-sdk/c
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { getSignedUrl: getCloudfrontSignedUrl } = require('@aws-sdk/cloudfront-signer');
 // const gm = require('gm').subClass({ imageMagick: true });
+const server_output = require('../../shared/server-output.json');
+
+const Bucket = server_output.Exports.find((obj) => obj.Name === 'private-photo-album-s3bucket')?.Value;
 
 dotenv.config();
 
@@ -22,7 +25,7 @@ app.get('/', (req, res) => {
 
 app.get('/list/folders', async (req, res) => {
     const command = new ListObjectsV2Command({
-        Bucket: 'xiaotangyuan-photos-s3uploadbucket-82uqegbz5751',
+        Bucket,
         Delimiter: '/',
     });
 
@@ -33,7 +36,7 @@ app.get('/list/folders', async (req, res) => {
 app.get('/list/:folder/photos', async (req, res) => {
     const ContinuationToken = req.query.ContinuationToken ? decodeURIComponent(req.query.ContinuationToken) : undefined;
     const command = new ListObjectsV2Command({
-        Bucket: 'xiaotangyuan-photos-s3uploadbucket-82uqegbz5751',
+        Bucket,
         Delimiter: '/',
         Prefix: req.params?.folder + '/',
         MaxKeys: 3,
@@ -51,7 +54,7 @@ app.get('/list/:folder/photos', async (req, res) => {
 
 app.get('/upload', async (req, res) => {
     const command = new PutObjectCommand({
-        Bucket: 'xiaotangyuan-photos-s3uploadbucket-82uqegbz5751',
+        Bucket,
         Key: '12314234.jpg',
         ContentType: 'image/jpeg',
     });
@@ -102,7 +105,7 @@ app.post('/upload-multi', upload.single('yoyo'), async (req, res) => {
     }
 
     // const command = new PutObjectCommand({
-    //     Bucket: 'xiaotangyuan-photos-s3uploadbucket-82uqegbz5751',
+    //     Bucket,
     //     Key: '12314234.jpg',
     //     ContentType: 'image/jpeg',
     //     Body: Buffer.from(fileBuffer, 'binary'),
