@@ -22,5 +22,6 @@ PrivateKey=$(<.ssh/private_key.pem)
 
 sam deploy --parameter-overrides PublicKey="${PublicKey// /\\ }" PrivateKey="${PrivateKey// /\\ }" --no-confirm-changeset
 
-# export the API endpoint
-# aws cloudformation list-exports > <some file>
+# export the API endpoint and S3 bucket
+aws cloudformation list-exports > ../shared/server-output.json
+cp ../shared/server-output.json ../app/src/api/server-output.json

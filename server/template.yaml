@@ -235,10 +235,13 @@ Outputs:
     Value: !Sub "https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com"
     Export:
       Name:
-        'Fn::Sub': '${AWS::StackName}-APIendpoint'
+        'Fn::Sub': 'private-photo-album-APIendpoint'
   S3UploadBucketName:
     Description: "S3 bucket for application uploads"
     Value: !Ref 'S3UploadBucket'
+    Export:
+      Name:
+        'Fn::Sub': 'private-photo-album-s3bucket'
   PublicKeyID:
     Description: "Public key id"
     Value: !Ref CDNPublicKey

@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import server_output from './server-output.json';
 import authService from './authService';
 
 interface ListResponse {
@@ -13,8 +14,9 @@ interface UploadResponse {
 class PhotoService {
     instance: AxiosInstance;
     constructor() {
+        const s3Url = server_output.Exports.find((obj: { Name: string; Value: string; }) => obj.Name === 'private-photo-album-APIendpoint')?.Value;
         this.instance = axios.create({
-            baseURL: 'https://r3bvkv7sp4.execute-api.us-east-1.amazonaws.com',
+            baseURL: s3Url,
             timeout: 10 * 1000,
         });
         this.instance.interceptors.request.use(this.beforeSent);
