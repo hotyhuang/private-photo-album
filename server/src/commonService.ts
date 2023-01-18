@@ -14,7 +14,7 @@ export default abstract class CommonService {
         if (!ENABLE_QUESTIONAIRE_ACCESS) {
             return true;
         }
-        const _answers = event.queryStringParameters || {};
+        const _answers = event.headers || {};
         const pass = Object.entries(ANSWERS).every(([question, ans]) =>
             ans.includes(decodeURIComponent(_answers[question] as string)),
         );

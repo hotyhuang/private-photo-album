@@ -23,7 +23,10 @@ class PhotoService {
 
     private beforeSent(config: AxiosRequestConfig) {
         // Do something before request is sent
-        config.params = authService.params;
+        config.headers = {
+            ...config.headers,
+            ...authService.params,
+        }
         return config;
     }
 
@@ -59,15 +62,10 @@ class PhotoService {
         return resp.data;
     }
 
-    public async upload(file: File, req?: AxiosRequestConfig): Promise<Response> {
+    private async upload(file: File, req?: AxiosRequestConfig): Promise<Response> {
         const {uploadURL} = await this.getUploadUrl(req);
 
         const buffer = await file.arrayBuffer();
-
-        if (/.heic$/i.test(file.name)) {
-            console.log('Yo need to convert heic');
-        }
-
         const bytes = new Uint8Array(buffer);
         const blobData = new Blob([bytes], {type: file.type});
 
@@ -79,6 +77,12 @@ class PhotoService {
             throw new Error(`Cannot upload photos. Status: ${resp.statusText}.`);
         }
         return resp;
+    }
+
+    /** @todo directly upload binary file to s3 */
+    private async uploadV2(file: File, req?: AxiosRequestConfig): Promise<Response> {
+        const resp = await this.instance.put('/upload', file, req);
+        return resp.data;
     }
 
     public async bulkUpload(files: File[], req?: AxiosRequestConfig): Promise<{

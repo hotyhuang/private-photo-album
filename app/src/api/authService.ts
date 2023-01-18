@@ -31,6 +31,10 @@ const QUESTIONS: QuestionType[] = [{
     key: 'like',
     label: 'What is my favorite toy?',
     placeholder: 'Enter english/chinese name',
+}, {
+    key: 'poem',
+    label: '诗句"卧梅又闻花"想表达什么意思？',
+    placeholder: 'Only those humble enough can access this album',
 }];
 /* ------------- End of def --------------- */
 
@@ -86,7 +90,7 @@ export class AuthDB {
 class AuthService {
     private static Answer_Cookie_Key = 'answer';
 
-    private _params: Object | undefined = undefined;
+    private _params: Record<string, string> | undefined = undefined;
 
     private _authorized = false;
 

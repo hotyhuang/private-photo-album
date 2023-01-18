@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Accordion, Spinner } from 'react-bootstrap';
 import cx from 'classnames';
 
@@ -22,6 +22,10 @@ function getGroupedDateFolder(folders: string[]) {
     return Object.entries(grouped).sort((a, b) => b[0].localeCompare(a[0]));
 }
 
+function isPhoneScreen() {
+    return window.screen.width < 768;
+}
+
 interface NavMenuProps {
     setAuthorized: (value: boolean) => void;
     selectedFolder?: string;
@@ -30,7 +34,7 @@ interface NavMenuProps {
 
 export const NavMenu: FC<NavMenuProps> = (props) => {
     const {setAuthorized, selectedFolder, setSelectedFolder} = props;
-    const [show, setShow] = useState(true);
+    const [show, setShow] = useState(() => isPhoneScreen() ? false : true);
     const [loading, setLoading] = useState(true);
     const [folderEntries, setFolderEntries] = useState<[string, string[]][]>([]);
 
@@ -59,6 +63,13 @@ export const NavMenu: FC<NavMenuProps> = (props) => {
         }
     }
 
+    const chooseFolder = useCallback((folder: string) => {
+        setSelectedFolder(folder);
+        if (isPhoneScreen()) {
+            setShow(false);
+        }
+    }, []);
+
     useEffect(() => {
         fetchList();
     }, []);
@@ -81,7 +92,7 @@ export const NavMenu: FC<NavMenuProps> = (props) => {
                                 <Accordion.Body
                                     key={folder}
                                     className={cx('menu-content-item', selectedFolder === folder ? 'isActive' : null)}
-                                    onClick={() => setSelectedFolder(folder)}
+                                    onClick={() => chooseFolder(folder)}
                                 >
                                     {folder}
                                 </Accordion.Body>

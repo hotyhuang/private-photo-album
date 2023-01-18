@@ -43,10 +43,11 @@ Resources:
     # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Type: AWS::Serverless::Function 
     Properties:
-      Handler: upload.handler
+      Handler: uploadWithSignedUrl.handler
       Policies:
         - S3WritePolicy:
             BucketName: !Ref S3UploadBucket
+      Timeout: 30
       Events:
         UploadAssetAPI:
           Type: HttpApi
@@ -63,7 +64,7 @@ Resources:
         External: 
           - 'aws-lambda'
         EntryPoints: 
-        - src/upload.ts
+        - src/uploadWithSignedUrl.ts
   
   ListFoldersFunction:
     # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction

@@ -1,7 +1,7 @@
 {
-  "name": "aws-photo-gallery-app",
+  "name": "private-photo-album",
   "version": "1.0.0",
-  "description": "This is an application to upload and view your photos stored in your aws s3 bucket.",
+  "description": "This is the application for the private photo album",
   "main": "index.js",
   "scripts": {
     "start": "webpack serve --progress --hot --config ./webpack.config.development.js",
@@ -17,7 +17,7 @@
     "s3",
     "react"
   ],
-  "author": "Hoty Huang",
+  "author": "hotyhuang",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/hotyhuang/aws-photo-gallery/issues"

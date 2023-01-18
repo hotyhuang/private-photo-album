@@ -3,10 +3,12 @@
 This is a project to display and upload my kid's photo by using aws s3.
 
 ## Remain Problems
-- How to upload .HEIC file? video?
 - push photos from daycare app
+- How to upload .HEIC file?
+- upload video
 - How to load photos by pagination (UI)?
 - auto refresh list after upload
+- rate limiting
 - Language switch
 - how to retrieve private photos by not using pre-signed URL? Using [Signed Cookies](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-signed-cookies.html) looks a better choice.
 

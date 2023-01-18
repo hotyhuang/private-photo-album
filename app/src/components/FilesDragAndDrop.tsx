@@ -98,7 +98,7 @@ export const FilesDragAndDrop: FC<FilesDragAndDropProps> = ({selectedFiles, onUp
                 type="file"
                 name="file"
                 multiple
-                accept='image/*,.heic'
+                accept='image/*'
                 onChange={(e) => {
                     if (e.target.files) {
                         onUploadFiles([...e.target.files]);

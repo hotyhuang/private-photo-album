@@ -1,10 +1,9 @@
 {
-  "name": "aws-photo-gallery-server",
+  "name": "private-photo-album-server",
   "version": "1.0.0",
-  "description": "hello world sample for NodeJS",
-  "main": "app.js",
+  "description": "Running the private photo album on aws lambda",
   "repository": "https://github.com/awslabs/aws-sam-cli/tree/develop/samcli/local/init/templates/cookiecutter-aws-sam-hello-nodejs",
-  "author": "SAM CLI",
+  "author": "hotyhuang",
   "license": "MIT",
   "scripts": {
     "unit": "jest",
@@ -27,6 +26,7 @@
     "eslint-plugin-prettier": "^4.0.0",
     "express": "^4.18.1",
     "jest": "^27.5.0",
+    "multer": "^1.4.5-lts.1",
     "nodemon": "^2.0.19",
     "prettier": "^2.5.1",
     "ts-node": "^10.4.0",

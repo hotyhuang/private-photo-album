@@ -1,6 +1,7 @@
 import { PutObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { APIGatewayProxyResult } from 'aws-lambda';
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+// import heicConvert from 'heic-convert';
+// import gm from 'gm';
 import CommonService from './commonService';
 
 class UploadService extends CommonService {
@@ -12,50 +13,71 @@ class UploadService extends CommonService {
         return `${folderName}/${+date}.jpg`;
     }
 
-    private async getUploadURL(): Promise<{ uploadURL: string; Key: string }> {
-        const Key = this.generateFileKey();
-
-        const command = new PutObjectCommand({
-            Bucket: process.env.UploadBucket,
-            Key,
-            ContentType: 'image/jpeg',
-        });
-
-        const uploadURL = await getSignedUrl(this.client, command, { expiresIn: 300 });
-
-        return {
-            uploadURL,
-            Key,
-        };
-    }
-
-    // private async uploadFile(event: APIGatewayProxyEvent) {
-    //     if (!event.body) {
-    //         throw new Error('You must upload with a file');
-    //     }
-
+    // private async getUploadURL(): Promise<{ uploadURL: string; Key: string }> {
     //     const Key = this.generateFileKey();
 
     //     const command = new PutObjectCommand({
     //         Bucket: process.env.UploadBucket,
     //         Key,
     //         ContentType: 'image/jpeg',
-    //         Body: Buffer.from(event.body, 'base64'),
     //     });
-    //     const response = this.client.send(command);
-    //     return response;
+
+    //     const uploadURL = await getSignedUrl(this.client, command, { expiresIn: 300 });
+
+    //     return {
+    //         uploadURL,
+    //         Key,
+    //     };
     // }
 
-    public async apiHandler(): Promise<APIGatewayProxyResult> {
-        const { uploadURL, Key } = await this.getUploadURL();
+    private async uploadFile(event: APIGatewayProxyEvent) {
+        if (!event.body) {
+            throw new Error('You must upload with a file');
+        }
 
-        console.log('Going to upload to ', uploadURL);
+        const buffer = Buffer.from(event.body, 'base64');
+        // if (/heic$/.test(event.headers['content-type'] as string)) {
+        //     console.log('Encounter a heic file!!');
+        //     buffer = Buffer.from(
+        //         await heicConvert({
+        //             buffer,
+        //             format: 'JPEG',
+        //         }),
+        //     );
+        //     // buffer = await sharp(buffer).toFormat('jpeg').toBuffer();
+        //     // const convertHeic = new Promise((res: (buf: Buffer) => void, rej) => {
+        //     //     gm.subClass({ imageMagick: true })(buffer).toBuffer('JPEG', (err, _buf) => {
+        //     //         if (err) {
+        //     //             console.log(err);
+        //     //             rej(err);
+        //     //         }
+        //     //         res(_buf);
+        //     //     });
+        //     // });
+        //     // buffer = await convertHeic;
+        // }
 
-        // const response = await this.uploadFile(event);
+        const Key = this.generateFileKey();
+        const command = new PutObjectCommand({
+            Bucket: process.env.UploadBucket,
+            Key,
+            ContentType: 'image/jpeg',
+            Body: buffer,
+        });
+        const response = this.client.send(command);
+        return response;
+    }
+
+    public async apiHandler(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+        // const { uploadURL, Key } = await this.getUploadURL();
+
+        // console.log('Going to upload to ', uploadURL);
+
+        const response = await this.uploadFile(event);
 
         return {
             statusCode: 200,
-            body: JSON.stringify({ uploadURL, Key }),
+            body: JSON.stringify({ response }),
         };
     }
 }

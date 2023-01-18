@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 const express = require('express');
-// const multer = require('multer');
+const multer = require('multer');
 // const convert = require('heic-convert');
 const fs = require('fs');
 const path = require('path');
@@ -8,6 +8,7 @@ const dotenv = require('dotenv');
 const { S3Client, ListObjectsV2Command, PutObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { getSignedUrl: getCloudfrontSignedUrl } = require('@aws-sdk/cloudfront-signer');
+// const gm = require('gm').subClass({ imageMagick: true });
 
 dotenv.config();
 
@@ -59,44 +60,57 @@ app.get('/upload', async (req, res) => {
     res.send(uploadURL);
 });
 
-// const storage = multer.memoryStorage();
-// const fileFilter = (req, file, cb) => {
-//     if (/^image/.test(file.mimetype)) {
-//         cb(null, true);
-//         return true;
-//     }
+app.post('/upload', async (req, res) => {
+    console.log(req.body);
+    res.send('yoyo');
+});
 
-//     cb(new Error('Cannot accept this file type'));
-// };
-// const upload = multer({ storage: storage, fileFilter });
-// app.post('/upload-multi', upload.single('yoyo'), async (req, res) => {
-//     console.log(req.file);
-//     res.send({
-//         status: 200,
-//         message: 'Upload initiated.',
-//     });
+const storage = multer.memoryStorage();
+const fileFilter = (req, file, cb) => {
+    if (/^image/.test(file.mimetype)) {
+        cb(null, true);
+        return true;
+    }
 
-//     let fileBuffer = req.file.buffer;
-//     if (/.heic$/.test(req.file.mimetype)) {
-//         console.log('convert start...', Date.now());
-//         fileBuffer = await convert({
-//             buffer: fileBuffer,
-//             format: 'JPEG',
-//             quality: 1,
-//         });
-//         console.log('convert ended...', Date.now());
-//     }
+    cb(new Error('Cannot accept this file type'));
+};
+const upload = multer({ storage: storage, fileFilter });
+app.post('/upload-multi', upload.single('yoyo'), async (req, res) => {
+    console.log(req.file);
+    res.send({
+        status: 200,
+        message: 'Upload initiated.',
+    });
 
-//     const command = new PutObjectCommand({
-//         Bucket: 'xiaotangyuan-photos-s3uploadbucket-82uqegbz5751',
-//         Key: '12314234.jpg',
-//         ContentType: 'image/jpeg',
-//         Body: Buffer.from(fileBuffer, 'binary'),
-//     });
+    let fileBuffer = req.file.buffer;
+    if (/.heic$/.test(req.file.mimetype)) {
+        console.log('convert start...', Date.now());
+        // fileBuffer = await convert({
+        //     buffer: fileBuffer,
+        //     format: 'JPEG',
+        //     quality: 1,
+        // });
+        // const asd = new Promise((resolve, reject) => {
+        //     gm(fileBuffer).toBuffer('JPEG', (err, _buf) => {
+        //         if (err) reject(err);
+        //         console.log('done!', _buf);
+        //         resolve(_buf);
+        //     });
+        // });
+        // await asd;
+        // console.log('convert ended...', Date.now());
+    }
 
-//     const response = await client.send(command);
-//     console.log('Uploaded to aws. ', Date.now(), response);
-// });
+    // const command = new PutObjectCommand({
+    //     Bucket: 'xiaotangyuan-photos-s3uploadbucket-82uqegbz5751',
+    //     Key: '12314234.jpg',
+    //     ContentType: 'image/jpeg',
+    //     Body: Buffer.from(fileBuffer, 'binary'),
+    // });
+
+    // const response = await client.send(command);
+    // console.log('Uploaded to aws. ', Date.now(), response);
+});
 
 // test async process
 let reqIndex = 1;

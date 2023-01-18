@@ -8,7 +8,12 @@
     overflow-y: auto;
 
     &.expand {
-        width: 400px;
+        width: min(400px, 100vw);
+
+        @media screen and (max-width: 767px) {
+            position: absolute;
+            z-index: 10;
+        }
     }
 
     .menu-header {
