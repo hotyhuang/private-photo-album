@@ -122,6 +122,10 @@ class AuthService {
     }
     public set params(value) {
         if (value) {
+            // encode each value, bcs it main contain other languages
+            Object.entries(value).forEach(([_k, _v]) => {
+                value[_k] = encodeURIComponent(_v);
+            });
             // keep cookie for 1 year
             Cookie.set(AuthService.Answer_Cookie_Key, JSON.stringify(value), {expires: 365});
             this._params = value;

@@ -49,7 +49,7 @@ export const AuthModal: FC<AuthModalProps> = (props) => {
                 </>
             ) : (
                 <Modal.Body>
-                    <Form validated={validated}>
+                    <Form validated={validated} onSubmit={onSubmit}>
                         {authService.questions.map(_q => (
                             <Form.Group className="mb-3" controlId={_q.key} key={_q.key}>
                                 <Form.Label>{_q.label}</Form.Label>
@@ -69,6 +69,11 @@ export const AuthModal: FC<AuthModalProps> = (props) => {
                         ))}
                     </Form>
                     <Button onClick={onSubmit}>Submit</Button>
+                    {hasTriedTimes > 0 && (
+                        <p style={{color: 'red'}}>
+                            {`You only have ${AuthDB.MAX_TRY - hasTriedTimes} times try left`}
+                        </p>
+                    )}
                 </Modal.Body>
             )}
         </Modal>

@@ -8,7 +8,7 @@ do
     read -p 'Enter your tadpoles email: ' EMAIL
 done
 
-while [[ -z PASSWORD ]];
+while [[ -z $PASSWORD ]];
 do
     read -sp 'Enter your password: ' PASSWORD
 done
