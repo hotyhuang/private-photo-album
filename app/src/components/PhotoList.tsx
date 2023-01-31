@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Modal, Spinner } from 'react-bootstrap';
 import { Navigation, Mousewheel, Keyboard } from 'swiper';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -13,6 +13,7 @@ import './PhotoList.scss';
 
 interface PhotoListProps {
     selectedFolder?: string;
+    mainEleRef: RefObject<HTMLDivElement>;
 }
 
 interface PhotoUrl {
@@ -21,24 +22,54 @@ interface PhotoUrl {
 }
 
 export const PhotoList: FC<PhotoListProps> = (props) => {
-    const {selectedFolder} = props;
+    const {selectedFolder, mainEleRef} = props;
     const [loading, setLoading] = useState(false);
     const [photoUrls, setPhotoUrls] = useState<PhotoUrl[]>([]);
     const [show, setShow] = useState(false);
     const [highlightPhotoIndex, setHighlightPhotoIndex] = useState<number | undefined>();
-    const fetchPhotos = async (folder: string) => {
+
+    const loadMoreFn = useRef<() => {}>();
+
+    const loadMoreFnGenerator = useCallback((folder: string, token: string, accPhotos: PhotoUrl[]) => {
+        return async () => {
+            const {scrollTop, scrollHeight, clientHeight} = mainEleRef.current as HTMLDivElement;
+
+            if (scrollTop + clientHeight > scrollHeight - 100) {
+                // remove listener to avoid duplicate loading
+                if (loadMoreFn.current) {
+                    mainEleRef.current?.removeEventListener('scroll', loadMoreFn.current);
+                }
+
+                await fetchPhotos(folder, token, accPhotos);
+            }
+        };
+    }, []);
+
+    const fetchPhotos = async (folder: string, token?: string, accPhotos?: PhotoUrl[]) => {
         setLoading(true);
         try {
-            const {URLs} = await photoService.getPhotos(folder);
+            const {URLs, continuationToken, isTruncated} = await photoService.getPhotos(folder, {params: {continuationToken: token}});
 
-            const _photoUrls: PhotoUrl[] = URLs.map(_url => {
+            let _photoUrls: PhotoUrl[] = URLs.map(_url => {
                 if (/\.(mp4|ogg|webm|mov)\?/i.test(_url)) {
                     return {url: _url, type: 'video'};
                 }
                 return {url: _url, type: 'img'};
             });
 
+            // with continuation token
+            if (token && accPhotos) {
+                _photoUrls = [...accPhotos, ..._photoUrls];
+            }
             setPhotoUrls(_photoUrls);
+
+            if (isTruncated && continuationToken) {
+                loadMoreFn.current = loadMoreFnGenerator(folder, continuationToken, _photoUrls);
+
+                mainEleRef.current?.addEventListener('scroll', loadMoreFn.current);
+            } else if (loadMoreFn.current) {
+                mainEleRef.current?.removeEventListener('scroll', loadMoreFn.current);
+            }
         } catch (err) {
             console.error(err);
         } finally {
@@ -54,31 +85,28 @@ export const PhotoList: FC<PhotoListProps> = (props) => {
 
     return (
         <>
-            {loading ? (
-                <Spinner animation='border' className='loadingSpinner' />
-            ) : (
-                <div className='photoList-container'>
-                    <div className='photoList'>
-                        {photoUrls.map((photoUrl, idx) => (
-                            <div key={photoUrl.url} className='photoItem' onClick={() => {setShow(true); setHighlightPhotoIndex(idx);}}>
-                                {photoUrl.type === 'img' ? (
-                                    <Image src={photoUrl.url} />
-                                ) : (
-                                    <div className='item-video'>
-                                        <div className='playbutton-backdrop'>
-                                            <img src={PlaySvg} alt='Play' />
-                                        </div>
-                                        <video>
-                                            <source src={photoUrl.url} />
-                                        </video>
+            <div className='photoList-container'>
+                <div className='photoList'>
+                    {photoUrls.map((photoUrl, idx) => (
+                        <div key={photoUrl.url} className='photoItem' onClick={() => {setShow(true); setHighlightPhotoIndex(idx);}}>
+                            {photoUrl.type === 'img' ? (
+                                <Image src={photoUrl.url} />
+                            ) : (
+                                <div className='item-video'>
+                                    <div className='playbutton-backdrop'>
+                                        <img src={PlaySvg} alt='Play' />
                                     </div>
-                                    
-                                )}
-                            </div>
-                        ))}
-                    </div>
+                                    <video>
+                                        <source src={photoUrl.url} />
+                                    </video>
+                                </div>
+                                
+                            )}
+                        </div>
+                    ))}
                 </div>
-            )}
+                {loading && (<Spinner animation='border' className='loadingSpinner' />)}
+            </div>
             <Modal
                 show={show}
                 centered

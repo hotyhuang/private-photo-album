@@ -1,4 +1,4 @@
-import React, { FC, useState } from "react";
+import React, { FC, useRef, useState } from "react";
 import authService from "./api/authService";
 import { AuthModal } from "./components/AuthModal";
 import { NavMenu } from "./components/NavMenu";
@@ -10,6 +10,8 @@ import './Main.scss';
 export const Main: FC = () => {
     const [authorized, setAuthorized] = useState(authService.authorized);
     const [selectedFolder, setSelectedFolder] = useState<string>();
+
+    const mainEleRef = useRef<HTMLDivElement>(null);
 
     if (!authorized) {
         return <AuthModal setAuthorized={setAuthorized} />
@@ -23,8 +25,8 @@ export const Main: FC = () => {
             <div className="app-header">
                 <UploadButton />
             </div>
-            <div className="app-main">
-                <PhotoList selectedFolder={selectedFolder} />
+            <div ref={mainEleRef} className="app-main">
+                <PhotoList selectedFolder={selectedFolder} mainEleRef={mainEleRef} />
             </div>
         </div>
     );

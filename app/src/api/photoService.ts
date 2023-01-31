@@ -4,6 +4,8 @@ import authService from './authService';
 
 interface ListResponse {
     URLs: string[];
+    continuationToken?: string;
+    isTruncated: boolean;
 }
 
 interface UploadResponse {
@@ -44,6 +46,9 @@ class PhotoService {
         return Promise.reject(error);
     }
 
+    /**
+     * @deprecated
+     */
     public async list(req?: AxiosRequestConfig): Promise<ListResponse> {
         const resp = await this.instance.get('/list', req);
         return resp.data;
@@ -54,7 +59,7 @@ class PhotoService {
         return resp.data;
     }
 
-    public async getPhotos(folder: string, req?: AxiosRequestConfig): Promise<{URLs: string[]}> {
+    public async getPhotos(folder: string, req?: AxiosRequestConfig): Promise<ListResponse> {
         const resp = await this.instance.get(`/list/${folder}/photos` , req);
         return resp.data;
     }
