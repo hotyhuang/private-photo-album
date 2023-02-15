@@ -26,7 +26,7 @@ class ListPhotosService extends CommonService {
         const command = new ListObjectsV2Command({
             Bucket: process.env.UploadBucket,
             Delimiter: '/',
-            Prefix: `${folder}/${isThumbnail ? 'thumbnail.' : ''}`,
+            Prefix: `${isThumbnail ? 'thumbnail-' : ''}${folder}/`,
             MaxKeys: 50,
             ContinuationToken,
         });
