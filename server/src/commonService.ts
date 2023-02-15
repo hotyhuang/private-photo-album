@@ -40,7 +40,7 @@ export default abstract class CommonService {
                 statusCode: 500,
                 body: JSON.stringify({
                     message: 'Something wrong.',
-                    error: JSON.stringify(err),
+                    error: err,
                 }),
             };
         }

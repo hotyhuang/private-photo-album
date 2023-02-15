@@ -21,11 +21,12 @@ class ListPhotosService extends CommonService {
         const ContinuationToken = event.queryStringParameters?.continuationToken
             ? decodeURIComponent(event.queryStringParameters?.continuationToken)
             : undefined;
+        const isThumbnail = event.queryStringParameters?.thumbnail === 'true';
 
         const command = new ListObjectsV2Command({
             Bucket: process.env.UploadBucket,
             Delimiter: '/',
-            Prefix: `${folder}/`,
+            Prefix: `${folder}/${isThumbnail ? 'thumbnail.' : ''}`,
             MaxKeys: 50,
             ContinuationToken,
         });
