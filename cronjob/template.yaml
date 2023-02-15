@@ -4,8 +4,6 @@ Description: >
   This template builds cron job for the private photo album
 
 Parameters:
-  S3Bucket:
-    Type: String
   AUTHEMAIL:
     Type: String
   AUTHPWD:
@@ -19,7 +17,6 @@ Globals:
     Runtime: nodejs16.x
     Environment:
       Variables:
-        S3Bucket: !Ref S3Bucket
         EMAIL: !Ref AUTHEMAIL
         PASSWORD: !Ref AUTHPWD
 
@@ -33,9 +30,9 @@ Resources:
       Timeout: 900
       Policies:
         - S3ReadPolicy:
-            BucketName: !Ref S3Bucket
+            BucketName: !ImportValue private-photo-album-s3bucket
         - S3WritePolicy:
-            BucketName: !Ref S3Bucket
+            BucketName: !ImportValue private-photo-album-s3bucket
       Events:
         ScheduledDownloader:
           Type: Schedule

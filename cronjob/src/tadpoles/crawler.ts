@@ -13,6 +13,7 @@ const CONTENT_TYPE_SUFFIX = {
     'video/mp4': '.mp4',
     // 'application/pdf': '.pdf',
 };
+type ContentTypeTypes = keyof typeof CONTENT_TYPE_SUFFIX;
 const Bucket = process.env.S3Bucket;
 
 export class TadpolesCrawler {
@@ -137,15 +138,20 @@ export class TadpolesCrawler {
     private async loadOneAsset(
         key: string,
         obj: string,
-        filename: string
+        filename: string,
+        isThumbnail?: boolean,
     ): Promise<{filePath: string; fileBuffer: Uint8Array; contentType: string;} | undefined> {
-        const params = {
+        const params: any = {
             key,
             obj,
         };
 
+        if (isThumbnail) {
+            params.thumbnail = true;
+        }
+
         const response = await this.fetch(`/remote/v1/obj_attachment?${this.paramsToString(params)}`);
-        const contentType = response.headers.get('content-type') as keyof typeof CONTENT_TYPE_SUFFIX;
+        const contentType = response.headers.get('content-type') as ContentTypeTypes;
         const suffix = CONTENT_TYPE_SUFFIX[contentType];
 
         // skip not needed file type, like pdf
@@ -153,11 +159,14 @@ export class TadpolesCrawler {
             return;
         }
 
-        const filePath = './assets/' + filename + suffix;
+        let filePath = './assets/' + filename + suffix;
         const buffer = await response.arrayBuffer();
         const view = new Uint8Array(buffer);
 
         if (this.assets_options.local_keep) {
+            if (isThumbnail) {
+                filePath = './assets/thumbnail.' + filename + suffix;
+            }
             fs.writeFileSync(filePath, view);
         }
 
@@ -170,11 +179,19 @@ export class TadpolesCrawler {
         };
     }
 
-    private async uploadToS3(asset: {filePath: string; fileBuffer: Uint8Array; contentType: string;}, date: string) {
+    private async uploadToS3(
+        asset: {filePath: string; fileBuffer: Uint8Array; contentType: string;},
+        date: string,
+        isThumbnail?: boolean,
+    ): Promise<void> {
+        if (!this.assets_options.upload_s3) {
+            return;
+        }
+
         const {filePath, fileBuffer, contentType} = asset;
         // use "YYYY-MM" as directory
         const month = /^\d{4}-\d{2}/.exec(date)?.[0] || '';
-        const filename = month + '/' + path.basename(filePath);
+        const filename = (isThumbnail ? 'thumbnail-' : '') + month + '/' + path.basename(filePath);
         const cmd = new PutObjectCommand({
             Bucket,
             Key: filename,
@@ -205,6 +222,15 @@ export class TadpolesCrawler {
 
             if (asset) {
                 await this.uploadToS3(asset, event_date);
+            }
+
+            // load and upload thumbnail for images
+            if (asset?.contentType === 'image/jpeg' || asset?.contentType === 'image/png') {
+                const thumbnail_asset = await this.loadOneAsset(attachments[i], key, filename, true);
+
+                if (thumbnail_asset) {
+                    await this.uploadToS3(thumbnail_asset, event_date, true);
+                }
             }
         }
     }

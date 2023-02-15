@@ -13,4 +13,4 @@ do
     read -sp 'Enter your password: ' PASSWORD
 done
 
-sam deploy --parameter-overrides S3Bucket="$S3_BUCKET" AUTHEMAIL="$EMAIL" AUTHPWD="$PASSWORD" --s3-bucket "$S3_BUCKET" --stack-name "photo-album-cronjob" --capabilities CAPABILITY_IAM
+sam deploy --parameter-overrides AUTHEMAIL="$EMAIL" AUTHPWD="$PASSWORD" --s3-bucket "$S3_BUCKET" --stack-name "photo-album-cronjob" --capabilities CAPABILITY_IAM
