@@ -17,6 +17,7 @@ Globals:
     Runtime: nodejs16.x
     Environment:
       Variables:
+        S3Bucket: !ImportValue private-photo-album-s3bucket
         EMAIL: !Ref AUTHEMAIL
         PASSWORD: !Ref AUTHPWD
 

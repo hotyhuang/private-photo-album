@@ -86,6 +86,11 @@ export class TadpolesCrawler {
             },
             body: formBody,
         });
+        if (response.status >= 400) {
+            console.error('Cannot login with the account and password');
+            process.exit(1);
+        }
+
         this.authCookie = response.headers.get('set-cookie') || '';
 
         console.log('Done login...');

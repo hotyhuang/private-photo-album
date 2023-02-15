@@ -6,6 +6,7 @@
   "scripts": {
     "start": "./local-run.sh",
     "compile": "tsc",
+    "verify:auth": "NODE_EMAIL=$EMAIL NODE_PASSWORD=$PASSWORD ts-node src/verifyAuth.ts",
     "build": "sam build --use-container",
     "just:deploy": "./deploy.sh",
     "deploy": "npm run build && npm run just:deploy"
