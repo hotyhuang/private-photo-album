@@ -172,10 +172,9 @@ export class TadpolesCrawler {
             if (isThumbnail) {
                 filePath = './assets/thumbnail.' + filename + suffix;
             }
+            console.log(`Writing to file ${filePath}...`);
             fs.writeFileSync(filePath, view);
         }
-
-        console.log(`Writing to file ${filePath}...`);
 
         return {
             filePath,

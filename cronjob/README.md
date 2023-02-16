@@ -13,4 +13,7 @@ This folder creates a cronjob. Currently it will grab assets from tadpoles.com, 
 |`npm run build`| build codes in container |
 |`npm run deploy`| build the codes and deploy to aws |
 
+## Todo List
+- [ ] Create thumbnail for videos (.mp4, .mov)
+
 ## References

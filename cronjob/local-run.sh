@@ -1,6 +1,7 @@
 #!/usr/local/bin/bash
 
 source ./variables.sh
+source ./authInput.sh
 
 dateReg='^[12][09][0-9][0-9]-[01][0-9]-[0-3][0-9]$'
 
@@ -16,4 +17,4 @@ done
 
 npm run compile
 
-S3Bucket=$S3_BUCKET AWS_REGION=$AWS_REGION startDate=$startDate endDate=$endDate node -r dotenv/config dist/local.js
+S3Bucket=$S3_BUCKET AWS_REGION=$AWS_REGION EMAIL=$EMAIL PASSWORD=$PASSWORD startDate=$startDate endDate=$endDate node -r dotenv/config dist/local.js
