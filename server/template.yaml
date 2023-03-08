@@ -45,7 +45,7 @@ Resources:
         - S3WritePolicy:
             BucketName: !Ref S3UploadBucket
       MemorySize: 1024
-      Timeout: 30
+      Timeout: 60
       Events:
         UploadAssetAPI:
           Type: HttpApi

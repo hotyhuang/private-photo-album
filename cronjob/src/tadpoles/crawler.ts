@@ -164,10 +164,10 @@ export class TadpolesCrawler {
             return;
         }
 
-        let filePath = './assets/' + filename + suffix;
         const buffer = await response.arrayBuffer();
         const view = new Uint8Array(buffer);
 
+        let filePath = './assets/' + filename + suffix;
         if (this.assets_options.local_keep) {
             if (isThumbnail) {
                 filePath = './assets/thumbnail.' + filename + suffix;
@@ -226,12 +226,10 @@ export class TadpolesCrawler {
 
             if (asset) {
                 await this.uploadToS3(asset, event_date);
-            }
 
-            // load and upload thumbnail for images
-            if (asset?.contentType === 'image/jpeg' || asset?.contentType === 'image/png') {
+                // all the assets here should have thumbnail available
+                // including content-type: jpg, png, video
                 const thumbnail_asset = await this.loadOneAsset(attachments[i], key, filename, true);
-
                 if (thumbnail_asset) {
                     await this.uploadToS3(thumbnail_asset, event_date, true);
                 }

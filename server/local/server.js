@@ -25,6 +25,7 @@ app.get('/list/folders', async (req, res) => {
     const command = new ListObjectsV2Command({
         Bucket,
         Delimiter: '/',
+        // Prefix: 'thumbnail-',
     });
 
     const data = await client.send(command);
