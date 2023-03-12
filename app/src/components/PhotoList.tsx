@@ -5,6 +5,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+import 'swiper/css/lazy';
 
 import PlaySvg from '../assets/play-button.svg';
 
@@ -16,7 +17,8 @@ interface PhotoListProps {
     mainEleRef: RefObject<HTMLDivElement>;
 }
 
-interface PhotoUrl {
+interface Photo {
+    thumbnail: string;
     url: string;
     type: 'img' | 'video';
 }
@@ -24,48 +26,77 @@ interface PhotoUrl {
 export const PhotoList: FC<PhotoListProps> = (props) => {
     const {selectedFolder, mainEleRef} = props;
     const [loading, setLoading] = useState(false);
-    const [photoUrls, setPhotoUrls] = useState<PhotoUrl[]>([]);
+    const [photos, setPhotos] = useState<Photo[]>([]);
     const [show, setShow] = useState(false);
     const [highlightPhotoIndex, setHighlightPhotoIndex] = useState<number | undefined>();
 
     const loadMoreFn = useRef<() => {}>();
 
-    const loadMoreFnGenerator = useCallback((folder: string, token: string, accPhotos: PhotoUrl[]) => {
-        return async () => {
-            const {scrollTop, scrollHeight, clientHeight} = mainEleRef.current as HTMLDivElement;
+    const loadMoreFnGenerator = useCallback(
+        (folder: string, options: {token: string; thumbnailToken?: string; accPhotos: Photo[]}) => {
+            return async () => {
+                const {scrollTop, scrollHeight, clientHeight} = mainEleRef.current as HTMLDivElement;
 
-            if (scrollTop + clientHeight > scrollHeight - 100) {
-                // remove listener to avoid duplicate loading
-                if (loadMoreFn.current) {
-                    mainEleRef.current?.removeEventListener('scroll', loadMoreFn.current);
+                if (scrollTop + clientHeight > scrollHeight - 100) {
+                    // remove listener to avoid duplicate loading
+                    if (loadMoreFn.current) {
+                        mainEleRef.current?.removeEventListener('scroll', loadMoreFn.current);
+                    }
+
+                    await fetchPhotos(folder, options);
                 }
+            };
+        }, []);
 
-                await fetchPhotos(folder, token, accPhotos);
-            }
-        };
-    }, []);
-
-    const fetchPhotos = async (folder: string, token?: string, accPhotos?: PhotoUrl[]) => {
+    const fetchPhotos = async (
+        folder: string,
+        options: {token?: string; thumbnailToken?: string; accPhotos?: Photo[]} = {}
+    ): Promise<void> => {
         setLoading(true);
         try {
-            const {URLs, continuationToken, isTruncated} = await photoService.getPhotos(folder, {params: {continuationToken: token}});
+            const {token, thumbnailToken, accPhotos} = options;
+            const [
+                thumbnailResp,
+                resp,
+            ] = await Promise.all([
+                photoService.getPhotos(folder, thumbnailToken, true),
+                photoService.getPhotos(folder, token, false),
+            ]);
 
-            let _photoUrls: PhotoUrl[] = URLs.map(_url => {
+            // 't_' for thumbnail, 'o_' for original
+            const {URLs: t_urls, continuationToken: t_token} = thumbnailResp;
+            const {URLs: o_urls, continuationToken: o_token, isTruncated: o_istruncated} = resp;
+
+            let _photos: Photo[] = o_urls.map(_url => {
+                let type: Photo['type'] = 'img';
                 if (/\.(mp4|ogg|webm|mov)\?/i.test(_url)) {
-                    return {url: _url, type: 'video'};
+                    type = 'video';
                 }
-                return {url: _url, type: 'img'};
+
+                const fileName = _url.match(/^https?.*\/(.*)\.\w+\?/)?.[1];
+                if (!fileName) {
+                    return {thumbnail: _url, url: _url, type};
+                }
+                // look for the thumbnail url, which must have the same name
+                const _thumbnail = t_urls.find(_url2 => fileName === _url2.match(/^https?.*\/(.*)\.\w+\?/)?.[1]);
+                if (!_thumbnail) {
+                    return {thumbnail: _url, url: _url, type};
+                }
+                return {thumbnail: _thumbnail, url: _url, type};
             });
 
             // with continuation token
             if (token && accPhotos) {
-                _photoUrls = [...accPhotos, ..._photoUrls];
+                _photos = [...accPhotos, ..._photos];
             }
-            setPhotoUrls(_photoUrls);
+            setPhotos(_photos);
 
-            if (isTruncated && continuationToken) {
-                loadMoreFn.current = loadMoreFnGenerator(folder, continuationToken, _photoUrls);
-
+            // We just need to check the origin, bcs photos can be loaded even thumbnails missing
+            if (o_istruncated && o_token) {
+                loadMoreFn.current = loadMoreFnGenerator(
+                    folder,
+                    {token: o_token, thumbnailToken: t_token, accPhotos: _photos}
+                );
                 mainEleRef.current?.addEventListener('scroll', loadMoreFn.current);
             } else if (loadMoreFn.current) {
                 mainEleRef.current?.removeEventListener('scroll', loadMoreFn.current);
@@ -79,6 +110,8 @@ export const PhotoList: FC<PhotoListProps> = (props) => {
 
     useEffect(() => {
         if (selectedFolder) {
+            // reset the photo urls, bcs this is selecting another folder
+            setPhotos([]);
             fetchPhotos(selectedFolder);
         }
     }, [selectedFolder]);
@@ -87,17 +120,17 @@ export const PhotoList: FC<PhotoListProps> = (props) => {
         <>
             <div className='photoList-container'>
                 <div className='photoList'>
-                    {photoUrls.map((photoUrl, idx) => (
-                        <div key={photoUrl.url} className='photoItem' onClick={() => {setShow(true); setHighlightPhotoIndex(idx);}}>
+                    {photos.map((photoUrl, idx) => (
+                        <div key={photoUrl.thumbnail} className='photoItem' onClick={() => {setShow(true); setHighlightPhotoIndex(idx);}}>
                             {photoUrl.type === 'img' ? (
-                                <Image src={photoUrl.url} />
+                                <Image src={photoUrl.thumbnail} loading='lazy' />
                             ) : (
                                 <div className='item-video'>
                                     <div className='playbutton-backdrop'>
                                         <img src={PlaySvg} alt='Play' />
                                     </div>
                                     <video>
-                                        <source src={photoUrl.url} />
+                                        <source src={photoUrl.thumbnail} />
                                     </video>
                                 </div>
                                 
@@ -131,10 +164,10 @@ export const PhotoList: FC<PhotoListProps> = (props) => {
                         initialSlide={highlightPhotoIndex}
                         modules={[Navigation, Mousewheel, Keyboard]}
                     >
-                        {photoUrls.map((photoUrl, idx) => (
+                        {photos.map((photoUrl, idx) => (
                             <SwiperSlide key={idx} className='highlight-photo-item'>
                                 {photoUrl.type === 'img' ? (
-                                    <Image key={photoUrl.url} src={photoUrl.url} className='highlight-photo-item-img' />
+                                    <Image key={photoUrl.url} src={photoUrl.url} loading='lazy' className='highlight-photo-item-img' />
                                 ) : (
                                     <video key={photoUrl.url} controls className='highlight-photo-item-img'>
                                         <source src={photoUrl.url} />

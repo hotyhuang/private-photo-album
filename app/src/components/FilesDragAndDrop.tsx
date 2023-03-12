@@ -73,14 +73,14 @@ export const FilesDragAndDrop: FC<FilesDragAndDropProps> = ({selectedFiles, onUp
     return (
         <>
             <div
-            ref={container}
-            className={cx('FilesDragAndDrop', {'isDragging': dragging, 'error': !!errorMessage})}
-            style={selectedFiles?.length && !dragging ? undefined : {height: '196px'}}
-            onDragOver={onDragOver}
-            onDrop={onDrop}
-            onDragEnter={onDragEnter}
-            onDragLeave={onDragLeave}
-            onClick={onClick}
+                ref={container}
+                className={cx('FilesDragAndDrop', {'isDragging': dragging, 'error': !!errorMessage})}
+                style={selectedFiles?.length && !dragging ? undefined : {height: '196px'}}
+                onDragOver={onDragOver}
+                onDrop={onDrop}
+                onDragEnter={onDragEnter}
+                onDragLeave={onDragLeave}
+                onClick={onClick}
             >
                 {dragging? 'Drop the files' : errorMessage ? errorMessage : selectedFiles?.length ? (
                     <div className='imagePreview'>
@@ -98,7 +98,7 @@ export const FilesDragAndDrop: FC<FilesDragAndDropProps> = ({selectedFiles, onUp
                 type="file"
                 name="file"
                 multiple
-                accept='image/*'
+                accept='image/*,.heic,.heif'
                 onChange={(e) => {
                     if (e.target.files) {
                         onUploadFiles([...e.target.files]);

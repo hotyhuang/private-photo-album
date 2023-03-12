@@ -59,8 +59,17 @@ class PhotoService {
         return resp.data;
     }
 
-    public async getPhotos(folder: string, req?: AxiosRequestConfig): Promise<ListResponse> {
-        const resp = await this.instance.get(`/list/${folder}/photos` , req);
+    public async getPhotos(folder: string, continuationToken?: string, thumbnail?: boolean): Promise<ListResponse> {
+        const options: AxiosRequestConfig = {
+            params: {},
+        };
+        if (continuationToken) {
+            options.params.continuationToken = continuationToken;
+        }
+        if (thumbnail) {
+            options.params.thumbnail = thumbnail;
+        }
+        const resp = await this.instance.get(`/list/${folder}/photos` , options);
         return resp.data;
     }
 
@@ -69,6 +78,10 @@ class PhotoService {
         return resp.data;
     }
 
+    /**
+     * @description Use signed url to upload photo
+     * @deprecated
+     */
     private async upload(file: File, req?: AxiosRequestConfig): Promise<Response> {
         const {uploadURL} = await this.getUploadUrl(req);
 
@@ -86,9 +99,13 @@ class PhotoService {
         return resp;
     }
 
-    /** @todo directly upload binary file to s3 */
     private async uploadV2(file: File, req?: AxiosRequestConfig): Promise<Response> {
-        const resp = await this.instance.put('/upload', file, req);
+        const config = {...req};
+        config.headers = {
+            ...req?.headers,
+            'Content-Type': file.type
+        }
+        const resp = await this.instance.put('/upload', file, config);
         return resp.data;
     }
 
@@ -102,7 +119,7 @@ class PhotoService {
             const file = files[i];
 
             try {
-                await this.upload(file, req);
+                await this.uploadV2(file, req);
             } catch (err) {
                 numOfFailed++;
             }

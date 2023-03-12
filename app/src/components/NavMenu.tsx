@@ -10,6 +10,8 @@ import './NavMenu.scss';
  * Used to get the grouped sub menu list, customize it with your own preference
  */
 function getGroupedDateFolder(folders: string[]) {
+    // remove the prefix 'thumbnail-', bcs the list API only contains the thumbnails now
+    folders = folders.map(folder => folder.replace(/^thumbnail-/, ''));
     const grouped = folders.sort().reverse().reduce((res, folder) => {
         const [year] = folder.split('-');
         if (!res[year]) {

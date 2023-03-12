@@ -14,18 +14,21 @@ export const UploadButton: FC = () => {
 
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [loading, setLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
 
 	const handleUpload = async () => {
         try {
             setLoading(true);
             const resp = await photoService.bulkUpload(selectedFiles);
             if (resp.type === 'partial') {
-                // handle partial
+                setSelectedFiles([]);
+                setErrorMsg(`${resp.numOfFailed} photos failed, but the rest of them are successful`);
+            } else {
+                handleClose();
             }
-
-            handleClose();
         } catch (err) {
-            console.error(err);
+            setSelectedFiles([]);
+            setErrorMsg('Something wrong, please try again later');
         } finally {
             setLoading(false);
         }
@@ -51,6 +54,9 @@ export const UploadButton: FC = () => {
             </Modal.Header>
             <Modal.Body>
                 <FilesDragAndDrop selectedFiles={selectedFiles} onUploadFiles={setSelectedFiles} />
+                {!!errorMsg && (
+                    <p style={{color: '#842029'}}>{errorMsg}</p>
+                )}
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="secondary" onClick={handleClose} disabled={loading}>
