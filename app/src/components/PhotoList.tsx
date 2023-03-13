@@ -7,8 +7,6 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/lazy';
 
-import PlaySvg from '../assets/play-button.svg';
-
 import photoService from '../api/photoService';
 import './PhotoList.scss';
 
@@ -22,6 +20,17 @@ interface Photo {
     url: string;
     type: 'img' | 'video';
 }
+
+const PlayIcon = (props: React.SVGAttributes<SVGSVGElement>) => (
+    <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+    >
+        <path d="M17 12.3301L9 16.6603L9 8L17 12.3301Z" fill="inherit" />
+    </svg>
+)
 
 export const PhotoList: FC<PhotoListProps> = (props) => {
     const {selectedFolder, mainEleRef} = props;
@@ -120,21 +129,14 @@ export const PhotoList: FC<PhotoListProps> = (props) => {
         <>
             <div className='photoList-container'>
                 <div className='photoList'>
-                    {photos.map((photoUrl, idx) => (
-                        <div key={photoUrl.thumbnail} className='photoItem' onClick={() => {setShow(true); setHighlightPhotoIndex(idx);}}>
-                            {photoUrl.type === 'img' ? (
-                                <Image src={photoUrl.thumbnail} loading='lazy' />
-                            ) : (
-                                <div className='item-video'>
-                                    <div className='playbutton-backdrop'>
-                                        <img src={PlaySvg} alt='Play' />
-                                    </div>
-                                    <video>
-                                        <source src={photoUrl.thumbnail} />
-                                    </video>
+                    {photos.map((_photo, idx) => (
+                        <div key={_photo.thumbnail} className='photoItem' onClick={() => {setShow(true); setHighlightPhotoIndex(idx);}}>
+                            {_photo.type === 'video' && (
+                                <div className='video-photo'>
+                                    <PlayIcon />
                                 </div>
-                                
                             )}
+                            <Image src={_photo.thumbnail} loading='lazy' thumbnail />
                         </div>
                     ))}
                 </div>
@@ -164,13 +166,13 @@ export const PhotoList: FC<PhotoListProps> = (props) => {
                         initialSlide={highlightPhotoIndex}
                         modules={[Navigation, Mousewheel, Keyboard]}
                     >
-                        {photos.map((photoUrl, idx) => (
+                        {photos.map((_photo, idx) => (
                             <SwiperSlide key={idx} className='highlight-photo-item'>
-                                {photoUrl.type === 'img' ? (
-                                    <Image key={photoUrl.url} src={photoUrl.url} loading='lazy' className='highlight-photo-item-img' />
+                                {_photo.type === 'img' ? (
+                                    <Image key={_photo.url} src={_photo.url} loading='lazy' className='highlight-photo-item-img' />
                                 ) : (
-                                    <video key={photoUrl.url} controls className='highlight-photo-item-img'>
-                                        <source src={photoUrl.url} />
+                                    <video key={_photo.url} controls className='highlight-photo-item-img'>
+                                        <source src={_photo.url} />
                                     </video>
                                 )}
                             </SwiperSlide>

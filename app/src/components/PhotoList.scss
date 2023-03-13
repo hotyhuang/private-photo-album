@@ -20,29 +20,51 @@
         cursor: pointer;
         transition: all .5s ease;
         max-height: 240px;
+        position: relative;
         
         &:hover {
             transform: scale(1.1);
         }
 
-        img, video {
+        img {
             max-width: 100%;
             max-height: 240px;
         }
 
-        .item-video {
-            position: relative;
+        $diameter: 6rem;
+        .video-photo {
+            position: absolute;
+            display: flex;
+            width: $diameter;
+            height: $diameter;
+            background-color: #fffc;
+            left: calc(50% - ($diameter / 2));
+            top: calc(50% - ($diameter / 2));
+            border-radius: 50%;
+            border: 5px #000 solid;
+            outline: 3px #fff solid;
 
-            .playbutton-backdrop {
-                position: absolute;
-                width: 100%;
-                height: 100%;
-                background-color: #0004;
+            @media screen and (max-width: 600px) {
+                $diameter: 2rem;
+                width: $diameter;
+                height: $diameter;
+                left: calc(50% - ($diameter / 2));
+                top: calc(50% - ($diameter / 2));
+                border: 2px #000 solid;
+                outline: none;
+            }
+            @media (min-width: 601px) and (max-width: 768px) {
+                $diameter: 4rem;
+                width: $diameter;
+                height: $diameter;
+                left: calc(50% - ($diameter / 2));
+                top: calc(50% - ($diameter / 2));
+                border: 3px #000 solid;
+                outline: 1px #fff solid;
+            }
 
-                img {
-                    width: 100%;
-                    height: 100%;
-                }
+            svg {
+                fill: #000;
             }
         }
     }

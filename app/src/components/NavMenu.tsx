@@ -6,22 +6,34 @@ import photoService from '../api/photoService';
 import authService from '../api/authService';
 import './NavMenu.scss';
 
+type YearFolder = {
+    year: string;
+    months: string[];
+}
+
+const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
 /**
  * Used to get the grouped sub menu list, customize it with your own preference
+ * @returns a list, each item represents one year
  */
-function getGroupedDateFolder(folders: string[]) {
+function getGroupedDateFolder(folders: string[]): YearFolder[] {
     // remove the prefix 'thumbnail-', bcs the list API only contains the thumbnails now
     folders = folders.map(folder => folder.replace(/^thumbnail-/, ''));
     const grouped = folders.sort().reverse().reduce((res, folder) => {
-        const [year] = folder.split('-');
+        const [year, month] = folder.split('-');
         if (!res[year]) {
             res[year] = [];
         }
-        res[year].push(folder);
+        if (!!month) {
+            res[year].push(month);
+        }
         return res;
     }, {} as {[year: string]: string[]});
 
-    return Object.entries(grouped).sort((a, b) => b[0].localeCompare(a[0]));
+    return Object.entries(grouped)
+        .sort((a, b) => b[0].localeCompare(a[0]))
+        .map(([year, months]) => ({year, months}));
 }
 
 function isPhoneScreen() {
@@ -38,18 +50,19 @@ export const NavMenu: FC<NavMenuProps> = (props) => {
     const {setAuthorized, selectedFolder, setSelectedFolder} = props;
     const [show, setShow] = useState(() => isPhoneScreen() ? false : true);
     const [loading, setLoading] = useState(true);
-    const [folderEntries, setFolderEntries] = useState<[string, string[]][]>([]);
+    const [yearFolders, setYearFolders] = useState<YearFolder[]>([]);
 
     const toggleShow = () => setShow(state => !state);
 
     const fetchList = async () => {
         try {
             const {folders} = await photoService.listFolders();
-            const entries = getGroupedDateFolder(folders);
-            setFolderEntries(entries);
+            const _yFolders = getGroupedDateFolder(folders);
+            setYearFolders(_yFolders);
             // the entries are already sorted, pick the 1st one to be selected folder
-            if (entries[0] && entries[0][1]) {
-                setSelectedFolder(entries[0][1][0]);
+            if (_yFolders[0] && _yFolders[0].year) {
+                const {year, months} = _yFolders[0];
+                setSelectedFolder(`${year}-${months[0]}`);
             }
         } catch (err: any) {
             if (err?.message === 'Your answers are incorrect') {
@@ -65,8 +78,8 @@ export const NavMenu: FC<NavMenuProps> = (props) => {
         }
     }
 
-    const chooseFolder = useCallback((folder: string) => {
-        setSelectedFolder(folder);
+    const chooseFolder = useCallback((folderName: string) => {
+        setSelectedFolder(folderName);
         if (isPhoneScreen()) {
             setShow(false);
         }
@@ -83,26 +96,35 @@ export const NavMenu: FC<NavMenuProps> = (props) => {
                     <i className={show ? 'gg-arrow-left' : 'gg-menu'} />
                 </div>
             </div>
-            {show ? loading ? (
+            {loading ? (
                 <Spinner variant='warning' animation='border' className='menu-loadingSpinner' />
             ) : (
-                <Accordion defaultActiveKey="0" flush className='menu-content'>
-                    {folderEntries.map(([year, folderNames], index) => (
+                <Accordion defaultActiveKey={['0']} alwaysOpen className='menu-content'>
+                    {yearFolders.map(({year, months}, index) => (
                         <Accordion.Item eventKey={`${index}`} key={year}>
-                            <Accordion.Header className='menu-content-header'>{year}</Accordion.Header>
-                            {folderNames.map((folder) => (
+                            <Accordion.Header className={cx(
+                                'menu-content-header',
+                                show ? null : 'mini-view',
+                            )}>
+                                {year}
+                            </Accordion.Header>
+                            {months.map((_month) => (
                                 <Accordion.Body
-                                    key={folder}
-                                    className={cx('menu-content-item', selectedFolder === folder ? 'isActive' : null)}
-                                    onClick={() => chooseFolder(folder)}
+                                    key={`${year}-${_month}`}
+                                    className={cx(
+                                        'menu-content-item',
+                                        selectedFolder === `${year}-${_month}` ? 'isActive' : null,
+                                        show? null : 'mini-view',
+                                    )}
+                                    onClick={() => chooseFolder(`${year}-${_month}`)}
                                 >
-                                    {folder}
+                                    {MONTH_SHORT[+_month - 1]}
                                 </Accordion.Body>
                             ))}
                         </Accordion.Item>
                     ))}
                 </Accordion>
-            ) : null}
+            )}
         </div>
     );
 };
