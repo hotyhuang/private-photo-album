@@ -1,4 +1,4 @@
-import React, { FC, useRef, useState } from "react";
+import React, { FC, useEffect, useRef, useState } from "react";
 import authService from "./api/authService";
 import { AuthModal } from "./components/AuthModal";
 import { NavMenu } from "./components/NavMenu";
@@ -12,6 +12,14 @@ export const Main: FC = () => {
     const [selectedFolder, setSelectedFolder] = useState<string>();
 
     const mainEleRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        // @TODO: make whole page scrollable, for better user exp
+        // This is to fix 100vh not working in mobile
+        if (document && window) {
+            document.body.style.setProperty('--app-height', `${window.innerHeight}px`);
+        }
+    }, []);
 
     if (!authorized) {
         return <AuthModal setAuthorized={setAuthorized} />

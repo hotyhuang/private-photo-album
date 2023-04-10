@@ -20,7 +20,7 @@ const QUESTIONS: QuestionType[] = [{
     key: 'name',
     label: 'What is my name?',
     description: 'e.g. Jay Chou, 周杰伦',
-    placeholder: 'Enter english/chinese name',
+    placeholder: 'Enter First and Last name',
 }, {
     key: 'dob',
     type: 'date',

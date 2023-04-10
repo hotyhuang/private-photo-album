@@ -1,6 +1,6 @@
 import React, { FC, RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Modal, Spinner } from 'react-bootstrap';
-import { Navigation, Mousewheel, Keyboard } from 'swiper';
+import { Navigation, Mousewheel, Keyboard, Lazy } from 'swiper';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -164,14 +164,14 @@ export const PhotoList: FC<PhotoListProps> = (props) => {
                         lazy
                         preloadImages={false}
                         initialSlide={highlightPhotoIndex}
-                        modules={[Navigation, Mousewheel, Keyboard]}
+                        modules={[Navigation, Mousewheel, Keyboard, Lazy]}
                     >
-                        {photos.map((_photo, idx) => (
-                            <SwiperSlide key={idx} className='highlight-photo-item'>
+                        {photos.map((_photo) => (
+                            <SwiperSlide key={`${_photo.thumbnail}-slide`} className='highlight-photo-item'>
                                 {_photo.type === 'img' ? (
-                                    <Image key={_photo.url} src={_photo.url} loading='lazy' className='highlight-photo-item-img' />
+                                    <img key={_photo.url} data-src={_photo.url} alt='x' className='highlight-photo-item-img swiper-lazy' />
                                 ) : (
-                                    <video key={_photo.url} controls className='highlight-photo-item-img'>
+                                    <video key={_photo.url} controls preload='none' className='highlight-photo-item-img'>
                                         <source src={_photo.url} />
                                     </video>
                                 )}

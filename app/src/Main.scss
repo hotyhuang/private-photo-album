@@ -5,7 +5,7 @@
     grid-template-areas: 
         "menu header"
         "menu main";
-    height: 100vh;
+    height: var(--app-height);
 }
 
 .app-menu {
