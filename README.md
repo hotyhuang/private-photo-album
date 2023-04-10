@@ -8,6 +8,27 @@ It is difficult to share photos between US (where my kid & I live) and the grand
 
 There are other problems like the storage may be unreliable, the loading time may vary denpends on what location the photo is served from, it is hard to set up a scheduled service to upload photos automatically (e.g. from Tadpoles), and you may need to share the credentials if using a 3rd-party service.
 
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph User-located-in
+        direction TB
+        U1((China)) --> U2((US))
+    end
+    User-located-in --> B(Web)
+    C1([CDN]) -.- B
+    B -->|API| D("Server (AWS Lambda)") -->|fetch/upload| E[(AWS S3)]
+    subgraph cronJob
+        direction TB
+        Tadpoles --> scheduler --> E
+    end
+
+    
+    C2([CDN]) -.- E
+```
+
+
 ## Components
 
 [Web app](/app)
@@ -25,7 +46,7 @@ There are other problems like the storage may be unreliable, the loading time ma
 - [ ] rate limiting
 - [ ] Content-Language (CN) auto switch
 - [ ] how to retrieve private photos by not using pre-signed URL? Using [Signed Cookies](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-signed-cookies.html) looks a better choice.
-- [ ] Maybe better to use [a docker container of AWS lambda](https://aws.amazon.com/blogs/compute/using-container-image-support-for-aws-lambda-with-aws-sam/) to replace Makefile build
+- [x] Maybe better to use [a docker container of AWS lambda](https://aws.amazon.com/blogs/compute/using-container-image-support-for-aws-lambda-with-aws-sam/) to replace Makefile build
 
 # Reference
 - [S3 presigned URLs with SAM](https://github.com/aws-samples/amazon-s3-presigned-urls-aws-sam)

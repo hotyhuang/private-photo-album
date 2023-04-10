@@ -35,6 +35,8 @@
     "classnames": "^2.3.1",
     "clean-webpack-plugin": "^4.0.0",
     "css-loader": "^6.7.1",
+    "favicons": "^7.1.2",
+    "favicons-webpack-plugin": "^6.0.0",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.5.0",
     "idb": "^7.0.2",
